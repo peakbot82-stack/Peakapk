@@ -66,6 +66,10 @@ jobs:
         export ANDROID_HOME=~/android-sdk
         export ANDROID_NDK_HOME=~/android-ndk-r23b
         
+        # Crear directorio para el APK
+        mkdir -p bin
+        
+        # Construir con arquitecturas específicas
         p4a apk \
           --requirements python3,kivy,requests,plyer,setuptools,cython \
           --private . \
@@ -75,7 +79,8 @@ jobs:
           --bootstrap=sdl2 \
           --android-api=30 \
           --minsdk=21 \
-          --ndk-version=23b \
+          --arch=arm64-v8a \
+          --arch=armeabi-v7a \
           --permission INTERNET \
           --permission WRITE_EXTERNAL_STORAGE \
           --permission READ_EXTERNAL_STORAGE \
