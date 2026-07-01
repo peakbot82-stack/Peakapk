@@ -1,4 +1,4 @@
-name: Build APK
+name: Build APK with p4a
 
 on:
   push:
@@ -18,48 +18,68 @@ jobs:
       with:
         python-version: '3.10'
     
-    - name: Install build dependencies
+    - name: Install dependencies
       run: |
         sudo apt update
         sudo apt install -y \
           git zip unzip openjdk-17-jdk \
           python3-pip autoconf libtool \
           pkg-config zlib1g-dev \
-          libncurses-dev libncursesw5-dev \
-          cmake libffi-dev \
+          libncurses-dev cmake libffi-dev \
           libssl-dev liblzma-dev \
           libjpeg-dev libxml2-dev libxslt1-dev
     
     - name: Install Python packages
       run: |
         pip install --upgrade pip
-        pip install buildozer cython setuptools wheel
+        pip install python-for-android cython setuptools wheel
         pip install -r requirements.txt
     
-    - name: Accept Android SDK licenses
+    - name: Install Android SDK & NDK
       run: |
-        # Crear directorio para el SDK
-        mkdir -p ~/.buildozer/android/platform/
+        # Instalar SDK tools
+        cd ~
+        mkdir -p android-sdk/cmdline-tools
+        cd android-sdk/cmdline-tools
+        wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
+        unzip -q commandlinetools-linux-9477386_latest.zip
+        mv cmdline-tools latest
+        cd ~
         
-        # Descargar sdkmanager si no existe
-        if [ ! -f ~/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager ]; then
-          wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
-          unzip -q commandlinetools-linux-9477386_latest.zip
-          mkdir -p ~/.buildozer/android/platform/android-sdk/cmdline-tools
-          mv cmdline-tools ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest
-        fi
+        # Configurar variables
+        export ANDROID_HOME=~/android-sdk
+        export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin
         
-        # Aceptar licencias automáticamente
-        export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-        export PATH=$PATH:~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin
-        
+        # Aceptar licencias
         yes | sdkmanager --licenses || true
-        yes | sdkmanager "platform-tools" "platforms;android-30" "build-tools;30.0.3" || true
-      continue-on-error: true
+        
+        # Instalar plataformas
+        sdkmanager "platform-tools" "platforms;android-30" "build-tools;30.0.3"
+        
+        # Instalar NDK
+        wget -q https://dl.google.com/android/repository/android-ndk-r23b-linux.zip
+        unzip -q android-ndk-r23b-linux.zip
+        export ANDROID_NDK_HOME=~/android-ndk-r23b
     
-    - name: Build APK with Buildozer
+    - name: Build APK with p4a
       run: |
-        buildozer android debug
+        export ANDROID_HOME=~/android-sdk
+        export ANDROID_NDK_HOME=~/android-ndk-r23b
+        
+        p4a apk \
+          --requirements python3,kivy,requests,plyer,setuptools,cython \
+          --private . \
+          --package=org.tuempresa.predictorpro \
+          --name="Predictor PRO" \
+          --version=1.0.0 \
+          --bootstrap=sdl2 \
+          --android-api=30 \
+          --minsdk=21 \
+          --ndk-version=23b \
+          --permission INTERNET \
+          --permission WRITE_EXTERNAL_STORAGE \
+          --permission READ_EXTERNAL_STORAGE \
+          --output bin/
     
     - name: Upload APK
       uses: actions/upload-artifact@v4
