@@ -1,0 +1,6 @@
+kivy==2.1.0
+kivymd==1.1.1
+requests==2.31.0
+plyer==2.9
+setuptools==69.0.3
+cython==3.0.7
