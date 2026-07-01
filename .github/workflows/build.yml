@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04  # Usar Ubuntu 22.04
     
     steps:
     - name: Checkout code
@@ -27,8 +27,8 @@ jobs:
           git zip unzip openjdk-17-jdk \
           python3-pip autoconf libtool \
           pkg-config zlib1g-dev \
-          libncurses5-dev libncursesw5-dev \
-          libtinfo5 cmake libffi-dev \
+          libncurses-dev libncursesw5-dev \
+          cmake libffi-dev \
           libssl-dev liblzma-dev \
           libjpeg-dev libxml2-dev libxslt1-dev
     
@@ -47,5 +47,4 @@ jobs:
       with:
         name: predictor-pro-apk
         path: bin/*.apk
-        compression-level: 0 # Opcional: mejora la velocidad de subida
-        if-no-files-found: error # Falla si no encuentra el APK
+        if-no-files-found: error
